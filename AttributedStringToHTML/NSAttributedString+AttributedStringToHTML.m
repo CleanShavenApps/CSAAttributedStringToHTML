@@ -10,6 +10,17 @@
 
 @implementation NSAttributedString (AttributedStringToHTML)
 
+NSString *EscapeHTMLEntitiesAndReplaceNewlinesWithBR(NSString* string)
+{
+	NSString *plainTextEscapedForHTML =
+	[string gtm_stringByEscapingForHTML];
+	
+	NSString *plainTextWithBRTags =
+	[plainTextEscapedForHTML stringByReplacingOccurrencesOfString:@"\n" withString:@"<br />"];
+	
+	return plainTextWithBRTags;
+}
+
 // Grabs the HTML for the range of attributed string. Pass in default attributes
 // with font, size, color so that attributes similar to the default attributes
 // will not be styled at all.
@@ -80,7 +91,7 @@
 	}
 	
 	[HTML appendString:openingTags];
-	[HTML appendString:[self.string substringWithRange:*effectiveRange]];
+	[HTML appendString:EscapeHTMLEntitiesAndReplaceNewlinesWithBR([self.string substringWithRange:*effectiveRange])];
 	[HTML appendString:closingTags];
 	
 	return HTML;
