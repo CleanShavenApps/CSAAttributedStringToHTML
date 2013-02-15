@@ -10,4 +10,8 @@
 
 @interface ViewController : UIViewController
 
+@property (weak, nonatomic) IBOutlet UITextView *attributedTextView;
+@property (weak, nonatomic) IBOutlet UITextView *HTMLOutputTextView;
+- (IBAction)convertRichTextToHTML:(id)sender;
+
 @end
