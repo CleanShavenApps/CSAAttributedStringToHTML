@@ -18,8 +18,8 @@
 		B37B4BAA16CE0E9A0085D627 /* Default-568h@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = B37B4BA916CE0E9A0085D627 /* Default-568h@2x.png */; };
 		B37B4BAD16CE0E9A0085D627 /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = B37B4BAC16CE0E9A0085D627 /* ViewController.m */; };
 		B37B4BB016CE0E9A0085D627 /* ViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = B37B4BAE16CE0E9A0085D627 /* ViewController.xib */; };
-		B37B4BB816CE11D80085D627 /* NSAttributedString+AttributedStringToHTML.m in Sources */ = {isa = PBXBuildFile; fileRef = B37B4BB716CE11D80085D627 /* NSAttributedString+AttributedStringToHTML.m */; };
 		B37B4BBD16CE91910085D627 /* GTMNSString+HTML.m in Sources */ = {isa = PBXBuildFile; fileRef = B37B4BBC16CE91910085D627 /* GTMNSString+HTML.m */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
+		B37B4C0316CEA0620085D627 /* NSAttributedString+AttributedStringToHTML.m in Sources */ = {isa = PBXBuildFile; fileRef = B37B4C0216CEA0620085D627 /* NSAttributedString+AttributedStringToHTML.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -39,11 +39,11 @@
 		B37B4BAB16CE0E9A0085D627 /* ViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ViewController.h; sourceTree = "<group>"; };
 		B37B4BAC16CE0E9A0085D627 /* ViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ViewController.m; sourceTree = "<group>"; };
 		B37B4BAF16CE0E9A0085D627 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/ViewController.xib; sourceTree = "<group>"; };
-		B37B4BB616CE11D80085D627 /* NSAttributedString+AttributedStringToHTML.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSAttributedString+AttributedStringToHTML.h"; sourceTree = "<group>"; };
-		B37B4BB716CE11D80085D627 /* NSAttributedString+AttributedStringToHTML.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSAttributedString+AttributedStringToHTML.m"; sourceTree = "<group>"; };
 		B37B4BBA16CE91910085D627 /* GTMDefines.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GTMDefines.h; sourceTree = "<group>"; };
 		B37B4BBB16CE91910085D627 /* GTMNSString+HTML.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "GTMNSString+HTML.h"; sourceTree = "<group>"; };
 		B37B4BBC16CE91910085D627 /* GTMNSString+HTML.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "GTMNSString+HTML.m"; sourceTree = "<group>"; };
+		B37B4C0116CEA0620085D627 /* NSAttributedString+AttributedStringToHTML.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSAttributedString+AttributedStringToHTML.h"; sourceTree = "<group>"; };
+		B37B4C0216CEA0620085D627 /* NSAttributedString+AttributedStringToHTML.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSAttributedString+AttributedStringToHTML.m"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -95,8 +95,7 @@
 				B37B4BAB16CE0E9A0085D627 /* ViewController.h */,
 				B37B4BAC16CE0E9A0085D627 /* ViewController.m */,
 				B37B4BAE16CE0E9A0085D627 /* ViewController.xib */,
-				B37B4BB616CE11D80085D627 /* NSAttributedString+AttributedStringToHTML.h */,
-				B37B4BB716CE11D80085D627 /* NSAttributedString+AttributedStringToHTML.m */,
+				B37B4C0016CEA0620085D627 /* CSAAttributedStringToHTML */,
 				B37B4BB916CE91910085D627 /* GTMNSString+HTML */,
 				B37B4B9A16CE0E9A0085D627 /* Supporting Files */,
 			);
@@ -126,6 +125,15 @@
 			);
 			path = "GTMNSString+HTML";
 			sourceTree = "<group>";
+		};
+		B37B4C0016CEA0620085D627 /* CSAAttributedStringToHTML */ = {
+			isa = PBXGroup;
+			children = (
+				B37B4C0116CEA0620085D627 /* NSAttributedString+AttributedStringToHTML.h */,
+				B37B4C0216CEA0620085D627 /* NSAttributedString+AttributedStringToHTML.m */,
+			);
+			path = CSAAttributedStringToHTML;
+			sourceTree = SOURCE_ROOT;
 		};
 /* End PBXGroup section */
 
@@ -196,8 +204,8 @@
 				B37B4BA016CE0E9A0085D627 /* main.m in Sources */,
 				B37B4BA416CE0E9A0085D627 /* AppDelegate.m in Sources */,
 				B37B4BAD16CE0E9A0085D627 /* ViewController.m in Sources */,
-				B37B4BB816CE11D80085D627 /* NSAttributedString+AttributedStringToHTML.m in Sources */,
 				B37B4BBD16CE91910085D627 /* GTMNSString+HTML.m in Sources */,
+				B37B4C0316CEA0620085D627 /* NSAttributedString+AttributedStringToHTML.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -322,6 +330,7 @@
 				B37B4BB516CE0E9A0085D627 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
