@@ -21,10 +21,24 @@ NSString *EscapeHTMLEntitiesAndReplaceNewlinesWithBR(NSString* string)
 	return plainTextWithBRTags;
 }
 
+NSString *WrapEscapedContentWithTags(NSString* escapedContent, NSString *openingTags, NSString *closingTags)
+{
+	return [NSString stringWithFormat:@"%@%@%@", openingTags, escapedContent, closingTags];
+}
+
 // Grabs the HTML for the range of attributed string. Pass in default attributes
 // with font, size, color so that attributes similar to the default attributes
 // will not be styled at all.
 - (NSString *)HTMLFromRange:(NSRange)range ignoringAttributes:(NSDictionary *)defaultAttributes
+{
+	return [self HTMLFromRange:range
+			ignoringAttributes:defaultAttributes
+	   customTagsForAttributes:nil];
+}
+
+- (NSString *)HTMLFromRange:(NSRange)range
+		 ignoringAttributes:(NSDictionary *)defaultAttributes
+	customTagsForAttributes:(NSArray *)customAttributesList
 {
 	NSMutableString *HTML = [NSMutableString string];
 	
@@ -36,7 +50,8 @@ NSString *EscapeHTMLEntitiesAndReplaceNewlinesWithBR(NSString* string)
 		[HTML appendString:
 		 [self HTMLAtIndex:location
 	 longestEffectiveRange:&effectiveRange
-		ignoringAttributes:defaultAttributes]];
+		ignoringAttributes:defaultAttributes
+   customTagsForAttributes:customAttributesList]];
 		
 		location = NSMaxRange(effectiveRange);
 	}
@@ -44,57 +59,73 @@ NSString *EscapeHTMLEntitiesAndReplaceNewlinesWithBR(NSString* string)
 	return HTML;
 }
 
-- (NSString *)HTMLAtIndex:(NSUInteger)index longestEffectiveRange:(NSRangePointer)effectiveRange ignoringAttributes:(NSDictionary *)defaultAttributes
-{
-	NSMutableString *HTML = [NSMutableString string];
-	NSMutableString *openingTags = [NSMutableString string];
-	NSMutableString *closingTags = [NSMutableString string];
-		
-	NSDictionary *attributes =
+- (NSString *)HTMLAtIndex:(NSUInteger)index
+	longestEffectiveRange:(NSRangePointer)effectiveRange
+	   ignoringAttributes:(NSDictionary *)defaultAttributes
+  customTagsForAttributes:(NSArray *)customAttributesList
+{		
+	NSDictionary *attributesAtIndex =
 	[self attributesAtIndex:index
 	  longestEffectiveRange:effectiveRange
 					inRange:NSMakeRange(index, self.length - index)];
 
+	
+	NSString *escapedContent =
+	EscapeHTMLEntitiesAndReplaceNewlinesWithBR([self.string substringWithRange:*effectiveRange]);
+
+	
+	// If we're ignoring attributes, return just the escaped content
 	BOOL shouldIgnoreAllAttributes =
-	(attributes && [attributes isEqualToDictionary:defaultAttributes]);
+	(attributesAtIndex && [attributesAtIndex isEqualToDictionary:defaultAttributes]);
+		
+	if (shouldIgnoreAllAttributes)
+		return escapedContent;
 	
-	UIFont *defaultFont = defaultAttributes[NSFontAttributeName];
-	
-	if (!shouldIgnoreAllAttributes)
+
+	// Check to see if we should wrap this with custom tags
+	for (NSDictionary *customAttributeDictionary in customAttributesList)
 	{
-		UIFont *effectiveFont = attributes[NSFontAttributeName];
-//		UIColor *color = attributes[NSForegroundColorAttributeName];
-		BOOL isUnderlined = [attributes[NSUnderlineStyleAttributeName] boolValue];
-		
-		if (effectiveFont && ![effectiveFont isEqual:defaultFont])
+		NSDictionary *customAttributes = customAttributeDictionary[CSACustomAttributesDictionaryKey];
+		if (customAttributes && [customAttributes isEqualToDictionary:attributesAtIndex])
 		{
-			NSString *lowercaseFontDescription = [[effectiveFont description] lowercaseString];
-			
-			if ([lowercaseFontDescription rangeOfString:@"font-weight: bold"].location != NSNotFound)
-			{
-				[openingTags appendString:@"<strong>"];
-				[closingTags insertString:@"</strong>" atIndex:0];
-			}
-			
-			else if ([lowercaseFontDescription rangeOfString:@"font-style: italic"].location != NSNotFound)
-			{
-				[openingTags appendString:@"<em>"];
-				[closingTags insertString:@"</em>" atIndex:0];
-			}
-		}
-		
-		if (isUnderlined)
-		{
-			[openingTags appendString:@"<u>"];
-			[closingTags insertString:@"</u>" atIndex:0];
+#warning Return here. How about formatted content within custom attributes?!
 		}
 	}
 	
-	[HTML appendString:openingTags];
-	[HTML appendString:EscapeHTMLEntitiesAndReplaceNewlinesWithBR([self.string substringWithRange:*effectiveRange])];
-	[HTML appendString:closingTags];
 	
-	return HTML;
+	// Else, wrap the content with any necessary formatting
+	NSMutableString *openingTags = [NSMutableString string];
+	NSMutableString *closingTags = [NSMutableString string];
+	
+	UIFont *defaultFont = defaultAttributes[NSFontAttributeName];
+	UIFont *effectiveFont = attributesAtIndex[NSFontAttributeName];
+	//		UIColor *color = attributes[NSForegroundColorAttributeName];
+	BOOL isUnderlined = [attributesAtIndex[NSUnderlineStyleAttributeName] boolValue];
+	
+	if (effectiveFont && ![effectiveFont isEqual:defaultFont])
+	{
+		NSString *lowercaseFontDescription = [[effectiveFont description] lowercaseString];
+		
+		if ([lowercaseFontDescription rangeOfString:@"font-weight: bold"].location != NSNotFound)
+		{
+			[openingTags appendString:@"<strong>"];
+			[closingTags insertString:@"</strong>" atIndex:0];
+		}
+		
+		else if ([lowercaseFontDescription rangeOfString:@"font-style: italic"].location != NSNotFound)
+		{
+			[openingTags appendString:@"<em>"];
+			[closingTags insertString:@"</em>" atIndex:0];
+		}
+	}
+	
+	if (isUnderlined)
+	{
+		[openingTags appendString:@"<u>"];
+		[closingTags insertString:@"</u>" atIndex:0];
+	}
+	
+	return WrapEscapedContentWithTags(escapedContent, openingTags, closingTags);
 }
 
 @end
