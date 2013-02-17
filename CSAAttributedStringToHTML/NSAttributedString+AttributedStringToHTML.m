@@ -21,6 +21,42 @@ NSString *EscapeHTMLEntitiesAndReplaceNewlinesWithBR(NSString* string)
 	return plainTextWithBRTags;
 }
 
+// Function adapted from https://github.com/erica/uicolor-utilities
+NSString *UIColorToHexString(UIColor *color)
+{
+	CGColorSpaceModel model = CGColorSpaceGetModel(CGColorGetColorSpace(color.CGColor));
+	NSString *result = nil;
+
+	if (model != kCGColorSpaceModelRGB && model != kCGColorSpaceModelMonochrome)
+		return nil;
+	
+	CGFloat r, g, b, w = 0.0f;
+	
+	switch (model)
+	{
+		case kCGColorSpaceModelRGB:
+		{
+			[color getRed:&r green:&g blue:&b alpha:NULL];
+			result = [NSString stringWithFormat:@"%02X%02X%02X",
+					  (int) (r * 0xFF), (int) (g * 0xFF), (int) (b * 0xFF)];
+			break;
+		}
+		case kCGColorSpaceModelMonochrome:
+		{
+			[color getWhite:&w alpha:NULL];
+			result = [NSString stringWithFormat:@"%02X%02X%02X",
+					  (int) (w * 0xFF), (int) (w * 0xFF), (int) (w * 0xFF)];
+			break;
+		}
+		default:
+			break;
+	}
+	
+	return result;
+}
+
+#pragma mark -
+
 // Grabs the HTML for the range of attributed string. Pass in default attributes
 // with font, size, color so that attributes similar to the default attributes
 // will not be styled at all.
