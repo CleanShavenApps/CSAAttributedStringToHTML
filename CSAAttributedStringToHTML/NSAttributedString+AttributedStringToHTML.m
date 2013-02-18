@@ -133,4 +133,100 @@ NSString *UIColorToHexString(UIColor *color)
 	return HTML;
 }
 
+#pragma mark -
+
+// Check if the attributed string contains attributes that matches those specified in attributesToMatch at the index, returning the effective range in which this applies. We're not comparing by isEqualToDictionary:, as we expect to match with lesser number of attributes than the full set in attributesToMatch. Thus the lesser attributes you provide in attributesToMatch, the faster this comparison.
+- (BOOL)containsAttributes:(NSDictionary *)attributesToMatch atIndex:(NSUInteger)index effectiveRange:(NSRangePointer)effectiveRange
+{
+	if (!attributesToMatch.count)
+	{
+		NSAssert(0, @"Can't determine if containsAttributes:atIndex:effectiveRange: with empty attributesToMatch");
+		return NO;
+	}
+	
+	NSDictionary *attributesAtIndex =
+	[self attributesAtIndex:index effectiveRange:effectiveRange];
+	
+	if (!attributesAtIndex.count)
+		return NO;
+	
+	// Assume YES until proven otherwise
+	__block BOOL containsAttributes = YES;
+	
+	[attributesToMatch enumerateKeysAndObjectsUsingBlock:^(id key, id obj, BOOL *stop) {
+		// As long as we have one non-matching key, say NO and get out of here
+		if (![attributesAtIndex[key] isEqual:obj])
+		{
+			containsAttributes = NO;
+			*stop = YES;
+		}
+	}];
+	
+	return containsAttributes;
+}
+
+// Returns YES if at least some text contains attributes matching this
+- (BOOL)containsTextWithAttributes:(NSDictionary *)attributes inRange:(NSRange)range containsForEntireRange:(NSNumber **)appliesForEntireRange
+{
+	NSUInteger location = range.location;
+	NSRange effectiveRange = NSMakeRange(0, 0);
+	
+	BOOL containsTextWithAttributesForLoop = NO; // For each loop
+	BOOL containsAtLeastSomeTextWithAttributes = NO; // As long as one loop proves true
+	BOOL fullyContainsTextWithAttributes = YES;	// Assume YES until proven otherwise
+	BOOL needsToGoThroughEntireRange = appliesForEntireRange != NULL;
+	
+	while (location < NSMaxRange(range))
+	{
+		containsTextWithAttributesForLoop =
+		[self containsAttributes:attributes
+						 atIndex:location
+				  effectiveRange:&effectiveRange];
+		
+		if (!containsTextWithAttributesForLoop)
+			fullyContainsTextWithAttributes = NO;
+		
+		// Already contains text with attributes in this loop
+		if (containsTextWithAttributesForLoop)
+		{
+			containsAtLeastSomeTextWithAttributes = YES;
+			
+			// And we're not expecting an answer whether or not this applies
+			// for the entire range, exit now
+			if (!needsToGoThroughEntireRange)
+			{
+				break;
+			}
+		}
+		
+		// Else march on ahead! And mark fullyContainsTextWithAttributes as NO
+		else
+		{
+			fullyContainsTextWithAttributes = containsTextWithAttributesForLoop;
+		}
+		
+		location = NSMaxRange(effectiveRange);
+	}
+
+	// Wants whether we fully contains text with matching attributes
+	if (appliesForEntireRange != NULL)
+		*appliesForEntireRange = @(fullyContainsTextWithAttributes);
+	
+	return containsAtLeastSomeTextWithAttributes;
+
+}
+
+- (BOOL)containsTextWithAttributes:(NSDictionary *)attributes inRange:(NSRange)range
+{
+	return [self containsTextWithAttributes:attributes inRange:range containsForEntireRange:NULL];
+}
+
+// Returns YES if the entire range contains text with such attributes
+- (BOOL)fullyContainsTextWithAttributes:(NSDictionary *)attributes inRange:(NSRange)range
+{
+	NSNumber *fullyContains = nil;
+	BOOL containsText = [self containsTextWithAttributes:attributes inRange:range containsForEntireRange:&fullyContains];
+	return containsText && [fullyContains boolValue];
+}
+
 @end
