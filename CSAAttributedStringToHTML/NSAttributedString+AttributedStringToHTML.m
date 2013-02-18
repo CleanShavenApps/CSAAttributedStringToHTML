@@ -59,38 +59,43 @@ NSString *UIColorToHexString(UIColor *color)
 
 // Grabs the HTML for the range of attributed string. Pass in default attributes
 // with font, size, color so that attributes similar to the default attributes
-// will not be styled at all.
-- (NSString *)HTMLFromRange:(NSRange)range ignoringAttributes:(NSDictionary *)defaultAttributes
+// will not be styled at all. Pass an array containing dictionaries with
+// CSASpecialTagAttributesKey and CSASpecialTagTagKey to mark text matching
+// attributes in CSASpecialTagAttributesKey with tag in CSASpecialTagTagKey
+- (NSString *)HTMLFromRange:(NSRange)range ignoringAttributes:(NSDictionary *)defaultAttributes useTagsForTextMatchingAttributes:(NSArray *)tagsForAttributes
 {
 	NSMutableString *HTML = [NSMutableString string];
 	
 	NSUInteger location = range.location;
 	NSRange effectiveRange = NSMakeRange(0, 0);
-
+	
 	while (location < NSMaxRange(range))
 	{
 		[HTML appendString:
-		 [self HTMLAtIndex:location
-	 longestEffectiveRange:&effectiveRange
-		ignoringAttributes:defaultAttributes]];
+		 [self HTMLAtIndex:location longestEffectiveRange:&effectiveRange ignoringAttributes:defaultAttributes useTagsForTextMatchingAttributes:tagsForAttributes]];
 		
 		location = NSMaxRange(effectiveRange);
 	}
 	
-	return HTML;
+	return HTML;	
 }
 
-- (NSString *)HTMLAtIndex:(NSUInteger)index longestEffectiveRange:(NSRangePointer)effectiveRange ignoringAttributes:(NSDictionary *)defaultAttributes
+- (NSString *)HTMLFromRange:(NSRange)range ignoringAttributes:(NSDictionary *)defaultAttributes
+{
+	return [self HTMLFromRange:range ignoringAttributes:defaultAttributes useTagsForTextMatchingAttributes:nil];
+}
+
+- (NSString *)HTMLAtIndex:(NSUInteger)index longestEffectiveRange:(NSRangePointer)effectiveRange ignoringAttributes:(NSDictionary *)defaultAttributes useTagsForTextMatchingAttributes:(NSArray *)tagsForAttributes
 {
 	NSMutableString *HTML = [NSMutableString string];
 	NSMutableString *openingTags = [NSMutableString string];
 	NSMutableString *closingTags = [NSMutableString string];
-		
+	
 	NSDictionary *attributes =
 	[self attributesAtIndex:index
 	  longestEffectiveRange:effectiveRange
 					inRange:NSMakeRange(index, self.length - index)];
-
+	
 	BOOL shouldIgnoreAllAttributes =
 	(attributes && [attributes isEqualToDictionary:defaultAttributes]);
 	
@@ -98,8 +103,28 @@ NSString *UIColorToHexString(UIColor *color)
 	
 	if (!shouldIgnoreAllAttributes)
 	{
+		// Puts in tags for these special attributes
+		if (tagsForAttributes)
+		{
+			for (NSDictionary *item in tagsForAttributes)
+			{
+				NSDictionary *specialAttributes = item[CSASpecialTagAttributesKey];
+				NSString *specialOpeningTag = item[CSASpecialTagOpenKey];
+				NSString *specialClosingTag = item[CSASpecialTagCloseKey];
+				
+				if (!specialAttributes || !specialOpeningTag || !specialClosingTag)
+					continue;
+				
+				if ([self containsTextWithAttributes:specialAttributes inRange:*effectiveRange])
+				{
+					[openingTags appendString:specialOpeningTag];
+					[closingTags insertString:specialClosingTag atIndex:0];
+				}
+			}
+		}
+		
 		UIFont *effectiveFont = attributes[NSFontAttributeName];
-//		UIColor *color = attributes[NSForegroundColorAttributeName];
+		//		UIColor *color = attributes[NSForegroundColorAttributeName];
 		BOOL isUnderlined = [attributes[NSUnderlineStyleAttributeName] boolValue];
 		
 		if (effectiveFont && ![effectiveFont isEqual:defaultFont])
@@ -131,6 +156,11 @@ NSString *UIColorToHexString(UIColor *color)
 	[HTML appendString:closingTags];
 	
 	return HTML;
+}
+
+- (NSString *)HTMLAtIndex:(NSUInteger)index longestEffectiveRange:(NSRangePointer)effectiveRange ignoringAttributes:(NSDictionary *)defaultAttributes
+{
+	return [self HTMLAtIndex:index longestEffectiveRange:effectiveRange ignoringAttributes:defaultAttributes useTagsForTextMatchingAttributes:nil];
 }
 
 #pragma mark -
