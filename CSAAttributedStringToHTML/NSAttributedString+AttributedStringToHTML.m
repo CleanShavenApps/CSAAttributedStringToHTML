@@ -166,16 +166,27 @@ NSString *UIColorToHexString(UIColor *color)
 #pragma mark -
 
 // Check if the attributed string contains attributes that matches those specified in attributesToMatch at the index, returning the effective range in which this applies. We're not comparing by isEqualToDictionary:, as we expect to match with lesser number of attributes than the full set in attributesToMatch. Thus the lesser attributes you provide in attributesToMatch, the faster this comparison.
-- (BOOL)containsAttributes:(NSDictionary *)attributesToMatch atIndex:(NSUInteger)index effectiveRange:(NSRangePointer)effectiveRange
+- (BOOL)containsAttributes:(NSDictionary *)attributesToMatch atIndex:(NSUInteger)index effectiveRange:(NSRangePointer)effectiveRange seekLongestEffectiveRange:(BOOL)wantsLongest
 {
 	if (!attributesToMatch.count)
 	{
-		NSAssert(0, @"Can't determine if containsAttributes:atIndex:effectiveRange: with empty attributesToMatch");
+		NSAssert(0, @"Can't determine containsAttributes:atIndex:effectiveRange:seekLongestEffectiveRange: with empty attributesToMatch");
 		return NO;
 	}
 	
-	NSDictionary *attributesAtIndex =
-	[self attributesAtIndex:index effectiveRange:effectiveRange];
+	NSDictionary *attributesAtIndex = nil;
+	
+	if (wantsLongest)
+	{
+		attributesAtIndex =
+		[self attributesAtIndex:index
+		  longestEffectiveRange:effectiveRange
+						inRange:NSMakeRange(index, self.length - index)];
+	}
+	else
+	{
+		attributesAtIndex = [self attributesAtIndex:index effectiveRange:effectiveRange];
+	}
 	
 	if (!attributesAtIndex.count)
 		return NO;
@@ -193,6 +204,16 @@ NSString *UIColorToHexString(UIColor *color)
 	}];
 	
 	return containsAttributes;
+}
+
+- (BOOL)containsAttributes:(NSDictionary *)attributesToMatch atIndex:(NSUInteger)index effectiveRange:(NSRangePointer)effectiveRange
+{
+	return [self containsAttributes:attributesToMatch atIndex:index effectiveRange:effectiveRange seekLongestEffectiveRange:NO];
+}
+
+- (BOOL)containsAttributes:(NSDictionary *)attributesToMatch atIndex:(NSUInteger)index longestEffectiveRange:(NSRangePointer)effectiveRange
+{
+	return [self containsAttributes:attributesToMatch atIndex:index effectiveRange:effectiveRange seekLongestEffectiveRange:YES];
 }
 
 // Returns YES if at least some text contains attributes matching this
