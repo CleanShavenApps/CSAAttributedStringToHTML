@@ -6,9 +6,13 @@
 //  Copyright (c) 2013 Lin Junjie. All rights reserved.
 //
 
+#define CSAHTMLElementContent		@"CSAHTMLElementContent"
+#define CSAHTMLElementStartTags		@"CSAHTMLElementStartTags"
+#define CSAHTMLElementEndTags		@"CSAHTMLElementEndTags"
+
 #define CSASpecialTagAttributesKey	@"CSASpecialTagAttributesKey"
-#define CSASpecialTagOpenKey		@"CSASpecialTagOpenKey"
-#define CSASpecialTagCloseKey		@"CSASpecialTagCloseKey"
+#define CSASpecialTagStartKey		@"CSASpecialTagStartKey"
+#define CSASpecialTagEndKey			@"CSASpecialTagEndKey"
 
 #import <Foundation/Foundation.h>
 #import "GTMNSString+HTML.h"
@@ -20,12 +24,21 @@
 // will not be styled at all. Pass an array containing dictionaries with
 // CSASpecialTagAttributesKey and CSASpecialTagTagKey to mark text matching
 // attributes in CSASpecialTagAttributesKey, with opening and closing tags in
-// CSASpecialTagOpenKey and CSASpecialTagCloseKey
+// CSASpecialTagStartKey and CSASpecialTagEndKey
 - (NSString *)HTMLFromRange:(NSRange)range ignoringAttributes:(NSDictionary *)defaultAttributes useTagsForTextMatchingAttributes:(NSArray *)tagsForAttributes;
 - (NSString *)HTMLFromRange:(NSRange)range ignoringAttributes:(NSDictionary *)defaultAttributes;
 
+
+// Returns the HTML string representing the entire HTML Element (tags + content)
 - (NSString *)HTMLAtIndex:(NSUInteger)index longestEffectiveRange:(NSRangePointer)effectiveRange ignoringAttributes:(NSDictionary *)defaultAttributes useTagsForTextMatchingAttributes:(NSArray *)tagsForAttributes;
 - (NSString *)HTMLAtIndex:(NSUInteger)index longestEffectiveRange:(NSRangePointer)effectiveRange ignoringAttributes:(NSDictionary *)defaultAttributes;
+
+
+// Instead of returning an HTML string representing the entire HTMLElement, this
+// method meturns an NSDictionary with the opening tags, content and closing
+// tags separately
+- (NSDictionary *)HTMLElementAtIndex:(NSUInteger)index longestEffectiveRange:(NSRangePointer)effectiveRange ignoringAttributes:(NSDictionary *)defaultAttributes useTagsForTextMatchingAttributes:(NSArray *)tagsForAttributes;
+
 
 //
 // Search through the text in the _range_ for any attributed text that contains matching attributes

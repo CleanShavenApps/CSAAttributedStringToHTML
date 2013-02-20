@@ -85,11 +85,13 @@ NSString *UIColorToHexString(UIColor *color)
 	return [self HTMLFromRange:range ignoringAttributes:defaultAttributes useTagsForTextMatchingAttributes:nil];
 }
 
-- (NSString *)HTMLAtIndex:(NSUInteger)index longestEffectiveRange:(NSRangePointer)effectiveRange ignoringAttributes:(NSDictionary *)defaultAttributes useTagsForTextMatchingAttributes:(NSArray *)tagsForAttributes
+// Instead of returning an HTML string representing the entire HTMLElement, this
+// method meturns an NSDictionary with the opening tags, content and closing
+// tags separately
+- (NSDictionary *)HTMLElementAtIndex:(NSUInteger)index longestEffectiveRange:(NSRangePointer)effectiveRange ignoringAttributes:(NSDictionary *)defaultAttributes useTagsForTextMatchingAttributes:(NSArray *)tagsForAttributes
 {
-	NSMutableString *HTML = [NSMutableString string];
-	NSMutableString *openingTags = [NSMutableString string];
-	NSMutableString *closingTags = [NSMutableString string];
+	NSMutableArray *openingTags = [NSMutableArray array];
+	NSMutableArray *closingTags = [NSMutableArray array];
 	
 	NSDictionary *attributes =
 	[self attributesAtIndex:index
@@ -109,16 +111,21 @@ NSString *UIColorToHexString(UIColor *color)
 			for (NSDictionary *item in tagsForAttributes)
 			{
 				NSDictionary *specialAttributes = item[CSASpecialTagAttributesKey];
-				NSString *specialOpeningTag = item[CSASpecialTagOpenKey];
-				NSString *specialClosingTag = item[CSASpecialTagCloseKey];
+				NSString *specialOpeningTag = item[CSASpecialTagStartKey];
+				NSString *specialClosingTag = item[CSASpecialTagEndKey];
 				
 				if (!specialAttributes || !specialOpeningTag || !specialClosingTag)
 					continue;
 				
 				if ([self containsTextWithAttributes:specialAttributes inRange:*effectiveRange])
 				{
-					[openingTags appendString:specialOpeningTag];
-					[closingTags insertString:specialClosingTag atIndex:0];
+					// if ([previousTags containsObject:item])
+					// {
+					//		// Remove
+					// }
+					
+					[openingTags addObject:specialOpeningTag];
+					[closingTags insertObject:specialClosingTag atIndex:0];
 				}
 			}
 		}
@@ -133,29 +140,53 @@ NSString *UIColorToHexString(UIColor *color)
 			
 			if ([lowercaseFontDescription rangeOfString:@"font-weight: bold"].location != NSNotFound)
 			{
-				[openingTags appendString:@"<strong>"];
-				[closingTags insertString:@"</strong>" atIndex:0];
+				[openingTags addObject:@"<strong>"];
+				[closingTags insertObject:@"</strong>" atIndex:0];
 			}
 			
 			else if ([lowercaseFontDescription rangeOfString:@"font-style: italic"].location != NSNotFound)
 			{
-				[openingTags appendString:@"<em>"];
-				[closingTags insertString:@"</em>" atIndex:0];
+				[openingTags addObject:@"<em>"];
+				[closingTags insertObject:@"</em>" atIndex:0];
 			}
 		}
 		
 		if (isUnderlined)
 		{
-			[openingTags appendString:@"<u>"];
-			[closingTags insertString:@"</u>" atIndex:0];
+			[openingTags addObject:@"<u>"];
+			[closingTags insertObject:@"</u>" atIndex:0];
 		}
 	}
+
+	return
+	@{
+   CSAHTMLElementContent : EscapeHTMLEntitiesAndReplaceNewlinesWithBR([self.string substringWithRange:*effectiveRange]),
+   CSAHTMLElementStartTags : openingTags,
+   CSAHTMLElementEndTags : closingTags
+   };
 	
-	[HTML appendString:openingTags];
-	[HTML appendString:EscapeHTMLEntitiesAndReplaceNewlinesWithBR([self.string substringWithRange:*effectiveRange])];
-	[HTML appendString:closingTags];
+}
+
+- (NSString *)HTMLAtIndex:(NSUInteger)index longestEffectiveRange:(NSRangePointer)effectiveRange ignoringAttributes:(NSDictionary *)defaultAttributes useTagsForTextMatchingAttributes:(NSArray *)tagsForAttributes
+{
+	NSDictionary *HTMLElement =
+	[self HTMLElementAtIndex:index longestEffectiveRange:effectiveRange
+		  ignoringAttributes:defaultAttributes useTagsForTextMatchingAttributes:tagsForAttributes];
 	
-	return HTML;
+	NSString *startTags = [HTMLElement[CSAHTMLElementStartTags] componentsJoinedByString:@""];
+	NSString *content = HTMLElement[CSAHTMLElementContent];
+	NSString *endTags = [HTMLElement[CSAHTMLElementEndTags] componentsJoinedByString:@""];
+
+	if (!startTags)
+		startTags = @"";
+	
+	if (!content)
+		content = @"";
+	
+	if (!endTags)
+		endTags = @"";
+	
+	return [NSString stringWithFormat:@"%@%@%@", startTags, content, endTags];	
 }
 
 - (NSString *)HTMLAtIndex:(NSUInteger)index longestEffectiveRange:(NSRangePointer)effectiveRange ignoringAttributes:(NSDictionary *)defaultAttributes
