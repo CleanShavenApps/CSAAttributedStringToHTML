@@ -57,32 +57,98 @@ NSString *UIColorToHexString(UIColor *color)
 
 #pragma mark -
 
+- (NSDictionary *)_HTMLElementByRemovingTag:(NSString *)tagName
+									fromKey:(NSString *)key
+							  ofHTMLElement:(NSDictionary *)HTMLElement
+{
+	NSArray *currentTagsInKey = HTMLElement[key];
+	
+	if (!currentTagsInKey.count)
+		return HTMLElement;
+	
+	NSMutableDictionary *adjustedHTMLElement =
+	[NSMutableDictionary dictionaryWithDictionary:HTMLElement];
+	
+	NSMutableArray *adjustedTags = [NSMutableArray arrayWithArray:currentTagsInKey];
+	[adjustedTags removeObject:tagName];
+	
+	adjustedHTMLElement[key] = adjustedTags;
+	
+	return adjustedHTMLElement;
+}
+
 // Grabs the HTML for the range of attributed string. Pass in default attributes
 // with font, size, color so that attributes similar to the default attributes
 // will not be styled at all. Pass an array containing dictionaries with
 // CSASpecialTagAttributesKey and CSASpecialTagTagKey to mark text matching
-// attributes in CSASpecialTagAttributesKey with tag in CSASpecialTagTagKey
-- (NSString *)HTMLFromRange:(NSRange)range ignoringAttributes:(NSDictionary *)defaultAttributes useTagsForTextMatchingAttributes:(NSArray *)tagsForAttributes
+// attributes in CSASpecialTagAttributesKey with tag in CSASpecialTagTagKey.
+// Provide mergerStartTag and mergeEndTag to merge contiguous tags into one
+- (NSString *)HTMLFromRange:(NSRange)range ignoringAttributes:(NSDictionary *)defaultAttributes useTagsForTextMatchingAttributes:(NSArray *)tagsForAttributes mergeContiguousStartTag:(NSString *)mergeStartTag contiguousEndTag:(NSString *)mergeEndTag
 {
 	NSMutableString *HTML = [NSMutableString string];
 	
 	NSUInteger location = range.location;
 	NSRange effectiveRange = NSMakeRange(0, 0);
+		
+	NSDictionary *lastHTMLElement = nil;
+	NSDictionary *currHTMLElement = nil;
+	
+	BOOL hasNonBreakingTags = mergeStartTag != nil && mergeEndTag != nil;
 	
 	while (location < NSMaxRange(range))
 	{
-		[HTML appendString:
-		 [self HTMLAtIndex:location longestEffectiveRange:&effectiveRange ignoringAttributes:defaultAttributes useTagsForTextMatchingAttributes:tagsForAttributes]];
+		currHTMLElement =
+		[self HTMLElementAtIndex:location longestEffectiveRange:&effectiveRange ignoringAttributes:defaultAttributes useTagsForTextMatchingAttributes:tagsForAttributes];
 		
+		NSArray *currStartTags = currHTMLElement[CSAHTMLElementStartTags];
+		
+		// Current start tag contains a non-breaking tag
+		if (hasNonBreakingTags && [currStartTags containsObject:mergeStartTag])
+		{
+			// Last end tag contains a non-breaking tag
+			if ([lastHTMLElement[CSAHTMLElementEndTags] containsObject:mergeEndTag])
+			{
+				// 1) Remove non-breaking end tag from lastHTMLElement
+				lastHTMLElement =
+				[self _HTMLElementByRemovingTag:mergeEndTag
+										fromKey:CSAHTMLElementEndTags
+								  ofHTMLElement:lastHTMLElement];
+				
+				// 2) Remove non-breaking start tag from currHTMLElement
+				currHTMLElement =
+				[self _HTMLElementByRemovingTag:mergeStartTag
+										fromKey:CSAHTMLElementStartTags
+								  ofHTMLElement:currHTMLElement];
+			}
+		}
+		
+		// Append the last element
+		[HTML appendString:
+		 [self HTMLElementStringFromHTMLElementDictionary:lastHTMLElement]];
+				
+		// Replace last HTML element with the current one
+		lastHTMLElement = currHTMLElement;
 		location = NSMaxRange(effectiveRange);
 	}
 	
-	return HTML;	
+	if (location > 0)
+	{
+		// Append the last one we didn't manage to append
+		[HTML appendString:
+		 [self HTMLElementStringFromHTMLElementDictionary:lastHTMLElement]];
+	}
+	
+	return HTML;
+}
+
+- (NSString *)HTMLFromRange:(NSRange)range ignoringAttributes:(NSDictionary *)defaultAttributes useTagsForTextMatchingAttributes:(NSArray *)tagsForAttributes
+{
+	return [self HTMLFromRange:range ignoringAttributes:defaultAttributes useTagsForTextMatchingAttributes:tagsForAttributes mergeContiguousStartTag:nil contiguousEndTag:nil];
 }
 
 - (NSString *)HTMLFromRange:(NSRange)range ignoringAttributes:(NSDictionary *)defaultAttributes
 {
-	return [self HTMLFromRange:range ignoringAttributes:defaultAttributes useTagsForTextMatchingAttributes:nil];
+	return [self HTMLFromRange:range ignoringAttributes:defaultAttributes useTagsForTextMatchingAttributes:nil mergeContiguousStartTag:nil contiguousEndTag:nil];
 }
 
 // Instead of returning an HTML string representing the entire HTMLElement, this
@@ -167,16 +233,15 @@ NSString *UIColorToHexString(UIColor *color)
 	
 }
 
-- (NSString *)HTMLAtIndex:(NSUInteger)index longestEffectiveRange:(NSRangePointer)effectiveRange ignoringAttributes:(NSDictionary *)defaultAttributes useTagsForTextMatchingAttributes:(NSArray *)tagsForAttributes
+- (NSString *)HTMLElementStringFromHTMLElementDictionary:(NSDictionary *)HTMLElement
 {
-	NSDictionary *HTMLElement =
-	[self HTMLElementAtIndex:index longestEffectiveRange:effectiveRange
-		  ignoringAttributes:defaultAttributes useTagsForTextMatchingAttributes:tagsForAttributes];
+	if (!HTMLElement)
+		return @"";
 	
 	NSString *startTags = [HTMLElement[CSAHTMLElementStartTags] componentsJoinedByString:@""];
 	NSString *content = HTMLElement[CSAHTMLElementContent];
 	NSString *endTags = [HTMLElement[CSAHTMLElementEndTags] componentsJoinedByString:@""];
-
+	
 	if (!startTags)
 		startTags = @"";
 	
@@ -186,7 +251,16 @@ NSString *UIColorToHexString(UIColor *color)
 	if (!endTags)
 		endTags = @"";
 	
-	return [NSString stringWithFormat:@"%@%@%@", startTags, content, endTags];	
+	return [NSString stringWithFormat:@"%@%@%@", startTags, content, endTags];
+}
+
+- (NSString *)HTMLAtIndex:(NSUInteger)index longestEffectiveRange:(NSRangePointer)effectiveRange ignoringAttributes:(NSDictionary *)defaultAttributes useTagsForTextMatchingAttributes:(NSArray *)tagsForAttributes
+{
+	NSDictionary *HTMLElement =
+	[self HTMLElementAtIndex:index longestEffectiveRange:effectiveRange
+		  ignoringAttributes:defaultAttributes useTagsForTextMatchingAttributes:tagsForAttributes];
+
+	return [self HTMLElementStringFromHTMLElementDictionary:HTMLElement];
 }
 
 - (NSString *)HTMLAtIndex:(NSUInteger)index longestEffectiveRange:(NSRangePointer)effectiveRange ignoringAttributes:(NSDictionary *)defaultAttributes

@@ -23,8 +23,9 @@
 // with font, size, color so that attributes similar to the default attributes
 // will not be styled at all. Pass an array containing dictionaries with
 // CSASpecialTagAttributesKey and CSASpecialTagTagKey to mark text matching
-// attributes in CSASpecialTagAttributesKey, with opening and closing tags in
-// CSASpecialTagStartKey and CSASpecialTagEndKey
+// attributes in CSASpecialTagAttributesKey with tag in CSASpecialTagTagKey.
+// Provide mergerStartTag and mergeEndTag to merge contiguous tags into one
+- (NSString *)HTMLFromRange:(NSRange)range ignoringAttributes:(NSDictionary *)defaultAttributes useTagsForTextMatchingAttributes:(NSArray *)tagsForAttributes mergeContiguousStartTag:(NSString *)mergeStartTag contiguousEndTag:(NSString *)mergeEndTag;
 - (NSString *)HTMLFromRange:(NSRange)range ignoringAttributes:(NSDictionary *)defaultAttributes useTagsForTextMatchingAttributes:(NSArray *)tagsForAttributes;
 - (NSString *)HTMLFromRange:(NSRange)range ignoringAttributes:(NSDictionary *)defaultAttributes;
 
