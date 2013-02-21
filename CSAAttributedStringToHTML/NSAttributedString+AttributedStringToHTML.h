@@ -35,7 +35,7 @@
 //
 // Provide a dictionary with the following keys to defaultAttrAndBIFonts when
 // recreating an attributed string from attributedStringFromDictionary:
-// defaultAttributesAndBIFonts:addAttributes:forKeys:
+// defaultAttributesAndBIFonts:setAttributes:forKeys:
 //
 
 // Provide the default attributes to style the attributed string when they do
@@ -137,7 +137,7 @@
 //
 + (NSAttributedString *)attributedStringFromDictionary:(NSDictionary *)dictionary
 						   defaultAttributesAndBIFonts:(NSDictionary *)defaultAttrAndBIFonts
-										 addAttributes:(NSArray *)attributes
+										 setAttributes:(NSArray *)attributes
 											   forKeys:(NSArray *)keys;
 
 @end

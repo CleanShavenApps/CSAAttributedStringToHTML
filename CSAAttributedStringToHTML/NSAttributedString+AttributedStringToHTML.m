@@ -508,24 +508,22 @@ NSString *UIColorToHexString(UIColor *color)
 	return representation;
 }
 
-//- (NSDictionary *)_attributesFor
-
 //
 // Returns an NSAttributedString, styled with attributes specified in
 // CSAAttributedStringDefaultAttributes
 //
 + (NSAttributedString *)attributedStringFromDictionary:(NSDictionary *)dictionary
 						   defaultAttributesAndBIFonts:(NSDictionary *)defaultAttrAndBIFonts
-										 addAttributes:(NSArray *)attributes
-											   forKeys:(NSArray *)keys
+										 setAttributes:(NSArray *)customAttributes
+											   forKeys:(NSArray *)customKeys
 {
 	if (!dictionary)
 		return nil;
 	
-	if (keys.count != attributes.count)
+	if (customKeys.count != customAttributes.count)
 	{
 		NSAssert(0, @"Need same number of keys (%d) and attributes (%d)",
-				 keys.count, attributes.count);
+				 customKeys.count, customAttributes.count);
 		return nil;
 	}
 
@@ -553,19 +551,6 @@ NSString *UIColorToHexString(UIColor *color)
 	}
 	
 	///
-	NSMutableDictionary *boldAttributes =
-	[NSMutableDictionary dictionaryWithDictionary:defaultAttributes];
-	boldAttributes[NSFontAttributeName] = boldFont;
-	
-	NSMutableDictionary *italicAttributes =
-	[NSMutableDictionary dictionaryWithDictionary:defaultAttributes];
-	italicAttributes[NSFontAttributeName] = italicFont;
-	
-	NSMutableDictionary *boldAndItalicAttributes =
-	[NSMutableDictionary dictionaryWithDictionary:defaultAttributes];
-	boldAndItalicAttributes[NSFontAttributeName] = boldAndItalicFont;
-	
-	///
 	NSMutableAttributedString *attributedString =
 	[[NSMutableAttributedString alloc] initWithString:string attributes:defaultAttributes];
 
@@ -573,33 +558,56 @@ NSString *UIColorToHexString(UIColor *color)
 	[rangeAttributesDictionary enumerateKeysAndObjectsUsingBlock:
 	 ^(NSString *rangeKey, NSDictionary *attributes, BOOL *stop) {
 		 
-		 if (attributes.count)
-		 {
-			 NSRange range = NSRangeFromString(rangeKey);
-
-			 if (range.length)
+		 @autoreleasepool {
+			 
+			 if (attributes.count)
 			 {
-				 BOOL isBold = [attributes[CSAAttributedStringBoldKey] boolValue];
-				 BOOL isItalic = [attributes[CSAAttributedStringItalicKey] boolValue];
-				 NSNumber *underline = attributes[CSAAttributedStringUnderlineKey];
+				 NSRange range = NSRangeFromString(rangeKey);
 				 
-				 NSMutableDictionary *attrbsToApply = (id) defaultAttributes;
-				 
-				 if (isBold && isItalic)
-					 attrbsToApply = boldAndItalicAttributes;
-				 else if (isBold)
-					 attrbsToApply = boldAttributes;
-				 else if (isItalic)
-					 attrbsToApply = italicAttributes;
-				 
-				 if (underline)
+				 if (range.length)
 				 {
-					 attrbsToApply = [NSMutableDictionary dictionaryWithDictionary:attrbsToApply];
-					 attrbsToApply[NSUnderlineStyleAttributeName] = underline;
+					 BOOL didUseCustomAttribute = NO;
+					 
+					 // Look for custom attributes to set
+					 NSUInteger idx = 0;
+					 for (NSString *customKey in customKeys)
+					 {
+						 if (attributes[customKey])
+						 {
+							 NSDictionary *customAttr = customAttributes[idx];
+							 if (customAttr)
+							 {
+								 [attributedString setAttributes:customAttr range:range];
+								 didUseCustomAttribute = YES;
+								 break;
+							 }
+						 }
+						 idx++;
+					 }
+					 
+					 // Otherwise set default attributes
+					 if (!didUseCustomAttribute)
+						 [attributedString setAttributes:defaultAttributes range:range];
+					 
+					 
+					 // BUI formatting
+					 BOOL isBold = [attributes[CSAAttributedStringBoldKey] boolValue];
+					 BOOL isItalic = [attributes[CSAAttributedStringItalicKey] boolValue];
+					 NSNumber *underline = attributes[CSAAttributedStringUnderlineKey];
+					 
+					 if (isBold && isItalic)
+						 [attributedString addAttribute:NSFontAttributeName value:boldAndItalicFont range:range];
+					 else if (isBold)
+						 [attributedString addAttribute:NSFontAttributeName value:boldFont range:range];
+					 else if (isItalic)
+						 [attributedString addAttribute:NSFontAttributeName value:italicFont range:range];
+					 
+					 if (underline)
+						 [attributedString addAttribute:NSUnderlineStyleAttributeName value:underline range:range];
+					 
 				 }
-				 
-				 [attributedString setAttributes:attrbsToApply range:range];
 			 }
+			 
 		 }
 	 }];
 	
