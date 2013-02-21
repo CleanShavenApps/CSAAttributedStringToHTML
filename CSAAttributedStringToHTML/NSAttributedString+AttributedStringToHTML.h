@@ -14,6 +14,41 @@
 #define CSASpecialTagStartKey		@"CSASpecialTagStartKey"
 #define CSASpecialTagEndKey			@"CSASpecialTagEndKey"
 
+#pragma mark - Dictionary Representation Keys
+
+// Contains the plain text string of the attributed string
+#define CSAAttributedStringStringKey		@"CSAAttributedStringStringKey"
+
+// Contains a dictionary of ranges-as-string as the keys, with the object being
+// NSDictionary containing the keys below
+#define CSAAttributedStringRangesKey		@"CSAAttributedStringRangesKey"
+
+// An NSNumber object containing a BOOL indicating whether the text is bold
+#define CSAAttributedStringBoldKey			@"CSAAttributedStringBoldKey"
+
+// An NSNumber object containing a BOOL indicating whether the text is bold
+#define CSAAttributedStringUnderlineKey		@"CSAAttributedStringUnderlineKey"
+
+// An NSNumber object containing a BOOL indicating whether the text is italic
+#define CSAAttributedStringItalicKey		@"CSAAttributedStringItalicKey"
+
+//
+// Provide a dictionary with the following keys to defaultAttrAndBIFonts when
+// recreating an attributed string from attributedStringFromDictionary:
+// defaultAttributesAndBIFonts:addAttributes:forKeys:
+//
+
+// Provide the default attributes to style the attributed string when they do
+// not have special formatting
+#define CSAAttributedStringDefaultAttributes	@"CSAAttributedStringDefaultAttributes"
+
+// Provide the corresponding UIFonts as objects to these keys to replace the
+// UIFont in CSAAttributedStringDefaultAttributes when styling them as bold,
+// italic, or both
+#define CSAAttributedStringBoldFont				@"CSAAttributedStringBoldFont"
+#define CSAAttributedStringItalicFont			@"CSAAttributedStringItalicFont"
+#define CSAAttributedStringBoldAndItalicFont	@"CSAAttributedStringBoldAndItalicFont"
+
 #import <Foundation/Foundation.h>
 #import "GTMNSString+HTML.h"
 
@@ -60,5 +95,49 @@
 
 // The longest effective range version of the above method, less efficient performance wise
 - (BOOL)containsAttributes:(NSDictionary *)attributesToMatch atIndex:(NSUInteger)index longestEffectiveRange:(NSRangePointer)longestEffectiveRange;
+
+#pragma mark - 
+
+//
+// Creates a dictionary representation of attributed string, with keys:
+//
+// - CSAAttributedStringString (a plain text representation of the attributed string)
+// - CSAAttributedStringRangeAttributes (contains keys that can recreate BUI
+//   formatting. Also stores custom keys specified in customKeys for range of
+//   string that matching attributes specified attributes
+//
+// - NSDictionary
+//   - NSString (CSAAttributedStringStringKey)
+//   - NSDictionary (CSAAttributedStringRangesKey) with NSRange as NSString as keys
+//     - NSDictionary with keys:
+//       - NSNumber (CSAAttributedStringBoldKey)
+//       - NSNumber (CSAAttributedStringUnderlineKey)
+//       - NSNumber (CSAAttributedStringItalicKey)
+//       - NSString
+
+//	CSAAttributedStringStringKey = "String contents";
+//	CSAAttributedStringRangesKey =     {
+//		"{0-5}" =         {
+//			CSAAttributedStringBoldKey = 1;
+//			CSAAttributedStringUnderlineKey = 0;
+//			CustomKey = 1;
+//		};
+//	};
+//
+// String with attributes that are equivalent (by isEqualToDictionary:) to
+// defaultAttributes will not be formatted in the dictionary representation
+//
+- (NSDictionary *)dictionaryRepresentationWithCustomKeys:(NSArray *)customKeys
+										   forAttributes:(NSArray *)attributes
+									  ignoringAttributes:(NSDictionary *)defaultAttributes;
+
+//
+// Returns an NSAttributedString, styled with attributes specified in
+// CSAAttributedStringDefaultAttributes
+//
++ (NSAttributedString *)attributedStringFromDictionary:(NSDictionary *)dictionary
+						   defaultAttributesAndBIFonts:(NSDictionary *)defaultAttrAndBIFonts
+										 addAttributes:(NSArray *)attributes
+											   forKeys:(NSArray *)keys;
 
 @end

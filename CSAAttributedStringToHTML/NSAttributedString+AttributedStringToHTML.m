@@ -151,6 +151,23 @@ NSString *UIColorToHexString(UIColor *color)
 	return [self HTMLFromRange:range ignoringAttributes:defaultAttributes useTagsForTextMatchingAttributes:nil mergeContiguousStartTag:nil contiguousEndTag:nil];
 }
 
+- (void)getIsBold:(BOOL *)isBold isItalic:(BOOL *)isItalic forFont:(UIFont *)font
+{
+	NSString *lowercaseFontDescription = [[font description] lowercaseString];
+
+	if (isBold != NULL)
+	{
+		*isBold =
+		[lowercaseFontDescription rangeOfString:@"font-weight: bold"].location != NSNotFound;
+	}
+	
+	if (isItalic != NULL)
+	{
+		*isItalic =
+		[lowercaseFontDescription rangeOfString:@"font-style: italic"].location != NSNotFound;
+	}	
+}
+
 // Instead of returning an HTML string representing the entire HTMLElement, this
 // method meturns an NSDictionary with the opening tags, content and closing
 // tags separately
@@ -202,15 +219,18 @@ NSString *UIColorToHexString(UIColor *color)
 		
 		if (effectiveFont && ![effectiveFont isEqual:defaultFont])
 		{
-			NSString *lowercaseFontDescription = [[effectiveFont description] lowercaseString];
+			BOOL isBold = NO;
+			BOOL isItalic = NO;
 			
-			if ([lowercaseFontDescription rangeOfString:@"font-weight: bold"].location != NSNotFound)
+			[self getIsBold:&isBold isItalic:&isItalic forFont:effectiveFont];
+			
+			if (isBold)
 			{
 				[openingTags addObject:@"<strong>"];
 				[closingTags insertObject:@"</strong>" atIndex:0];
 			}
 			
-			else if ([lowercaseFontDescription rangeOfString:@"font-style: italic"].location != NSNotFound)
+			if (isItalic)
 			{
 				[openingTags addObject:@"<em>"];
 				[closingTags insertObject:@"</em>" atIndex:0];
@@ -270,6 +290,26 @@ NSString *UIColorToHexString(UIColor *color)
 
 #pragma mark -
 
+- (BOOL)_containsAttributes:(NSDictionary *)attributesToMatch inAttributes:(NSDictionary *)attributesAtIndex
+{
+	if (!attributesAtIndex.count)
+		return NO;
+	
+	// Assume YES until proven otherwise
+	__block BOOL containsAttributes = YES;
+	
+	[attributesToMatch enumerateKeysAndObjectsUsingBlock:^(id key, id obj, BOOL *stop) {
+		// As long as we have one non-matching key, say NO and get out of here
+		if (![attributesAtIndex[key] isEqual:obj])
+		{
+			containsAttributes = NO;
+			*stop = YES;
+		}
+	}];
+	
+	return containsAttributes;
+}
+
 // Check if the attributed string contains attributes that matches those specified in attributesToMatch at the index, returning the effective range in which this applies. We're not comparing by isEqualToDictionary:, as we expect to match with lesser number of attributes than the full set in attributesToMatch. Thus the lesser attributes you provide in attributesToMatch, the faster this comparison.
 - (BOOL)containsAttributes:(NSDictionary *)attributesToMatch atIndex:(NSUInteger)index effectiveRange:(NSRangePointer)effectiveRange seekLongestEffectiveRange:(BOOL)wantsLongest
 {
@@ -292,23 +332,8 @@ NSString *UIColorToHexString(UIColor *color)
 	{
 		attributesAtIndex = [self attributesAtIndex:index effectiveRange:effectiveRange];
 	}
-	
-	if (!attributesAtIndex.count)
-		return NO;
-	
-	// Assume YES until proven otherwise
-	__block BOOL containsAttributes = YES;
-	
-	[attributesToMatch enumerateKeysAndObjectsUsingBlock:^(id key, id obj, BOOL *stop) {
-		// As long as we have one non-matching key, say NO and get out of here
-		if (![attributesAtIndex[key] isEqual:obj])
-		{
-			containsAttributes = NO;
-			*stop = YES;
-		}
-	}];
-	
-	return containsAttributes;
+
+	return [self _containsAttributes:attributesToMatch inAttributes:attributesAtIndex];
 }
 
 - (BOOL)containsAttributes:(NSDictionary *)attributesToMatch atIndex:(NSUInteger)index effectiveRange:(NSRangePointer)effectiveRange
@@ -384,5 +409,202 @@ NSString *UIColorToHexString(UIColor *color)
 	BOOL containsText = [self containsTextWithAttributes:attributes inRange:range containsForEntireRange:&fullyContains];
 	return containsText && [fullyContains boolValue];
 }
+
+#pragma mark - Dictionary Representation
+
+- (NSDictionary *)formattingDictionaryFromAttributes:(NSDictionary *)attributes
+									  withCustomKeys:(NSArray *)customKeys
+								  matchingAttributes:(NSArray *)customAttributes
+{
+	if (customKeys.count != customAttributes.count)
+	{
+		NSAssert(0, @"Need same number of keys (%d) and attributes (%d)",
+				 customKeys.count, customAttributes.count);
+		return nil;
+	}
+	
+	NSUInteger numberOfCustomKeys = customKeys.count;
+	
+	NSMutableDictionary *dictionary =
+	[NSMutableDictionary dictionaryWithCapacity:numberOfCustomKeys + 1];
+	
+	for (NSUInteger idx = 0; idx < numberOfCustomKeys; idx++)
+	{
+		NSDictionary *customAttribute = customAttributes[idx];
+		
+		if ([self _containsAttributes:customAttribute inAttributes:attributes])
+		{
+			NSString *customKey = customKeys[idx];
+			dictionary[customKey] = @YES;
+		}
+	}
+	
+	// Add BUI
+	BOOL isUnderlined = [attributes[NSUnderlineStyleAttributeName] boolValue];
+	
+	UIFont *effectiveFont = attributes[NSFontAttributeName];
+	BOOL isBold = NO;
+	BOOL isItalic = NO;
+	
+	[self getIsBold:&isBold isItalic:&isItalic forFont:effectiveFont];
+	
+	if (isBold)
+		dictionary[CSAAttributedStringBoldKey] = @YES;
+	
+	if (isItalic)
+		dictionary[CSAAttributedStringItalicKey] = @YES;
+	
+	if (isUnderlined)
+		dictionary[CSAAttributedStringUnderlineKey] = @(NSUnderlineStyleSingle);
+	
+	return dictionary;
+}
+
+- (NSDictionary *)dictionaryRepresentationWithCustomKeys:(NSArray *)customKeys
+										   forAttributes:(NSArray *)attributes
+									  ignoringAttributes:(NSDictionary *)defaultAttributes
+{
+	if (customKeys.count != attributes.count)
+	{
+		NSAssert(0, @"Need same number of keys (%d) and attributes (%d)",
+				 customKeys.count, attributes.count);
+		return nil;
+	}
+	
+	NSMutableDictionary *representation = [NSMutableDictionary dictionaryWithCapacity:2];
+	representation[CSAAttributedStringStringKey] = self.string;
+	
+	NSMutableDictionary *rangeAttributesDictionary = [NSMutableDictionary dictionary];
+	
+	[self enumerateAttributesInRange:NSMakeRange(0, self.length)
+							 options:0
+						  usingBlock:
+	 ^(NSDictionary *attrs, NSRange range, BOOL *stop) {
+		 
+		 @autoreleasepool {
+			 BOOL shouldIgnoreAllAttributes =
+			 (attrs && defaultAttributes && [attrs isEqualToDictionary:defaultAttributes]);
+			 
+			 if (!shouldIgnoreAllAttributes)
+			 {
+				 NSString *rangeString = NSStringFromRange(range);
+				 
+				 if (rangeString)
+				 {
+					 NSDictionary *formattingDictionary =
+					 [self formattingDictionaryFromAttributes:attrs
+											   withCustomKeys:customKeys
+										   matchingAttributes:attributes];
+					 
+					 if (formattingDictionary.count)
+						 rangeAttributesDictionary[rangeString] = formattingDictionary;
+				 }
+			 }
+		 }
+		 
+	 }];
+	
+	representation[CSAAttributedStringRangesKey] = rangeAttributesDictionary;
+	return representation;
+}
+
+//- (NSDictionary *)_attributesFor
+
+//
+// Returns an NSAttributedString, styled with attributes specified in
+// CSAAttributedStringDefaultAttributes
+//
++ (NSAttributedString *)attributedStringFromDictionary:(NSDictionary *)dictionary
+						   defaultAttributesAndBIFonts:(NSDictionary *)defaultAttrAndBIFonts
+										 addAttributes:(NSArray *)attributes
+											   forKeys:(NSArray *)keys
+{
+	if (!dictionary)
+		return nil;
+	
+	if (keys.count != attributes.count)
+	{
+		NSAssert(0, @"Need same number of keys (%d) and attributes (%d)",
+				 keys.count, attributes.count);
+		return nil;
+	}
+
+	NSString *string = dictionary[CSAAttributedStringStringKey];
+	if (!string)
+		return nil;
+
+	NSDictionary *defaultAttributes =
+	defaultAttrAndBIFonts[CSAAttributedStringDefaultAttributes];
+	
+	if (!defaultAttributes)
+	{
+		NSAssert(0, @"Need default attributes at CSAAttributedStringDefaultAttributes");
+		return nil;
+	}
+	
+	UIFont *boldFont = defaultAttrAndBIFonts[CSAAttributedStringBoldFont];
+	UIFont *italicFont = defaultAttrAndBIFonts[CSAAttributedStringItalicFont];
+	UIFont *boldAndItalicFont = defaultAttrAndBIFonts[CSAAttributedStringBoldAndItalicFont];
+	
+	if (!boldFont || !italicFont || !boldAndItalicFont)
+	{
+		NSAssert(0, @"Missing CSAAttributedStringBoldFont, CSAAttributedStringItalicFont or CSAAttributedStringBoldAndItalicFont");
+		return nil;
+	}
+	
+	///
+	NSMutableDictionary *boldAttributes =
+	[NSMutableDictionary dictionaryWithDictionary:defaultAttributes];
+	boldAttributes[NSFontAttributeName] = boldFont;
+	
+	NSMutableDictionary *italicAttributes =
+	[NSMutableDictionary dictionaryWithDictionary:defaultAttributes];
+	italicAttributes[NSFontAttributeName] = italicFont;
+	
+	NSMutableDictionary *boldAndItalicAttributes =
+	[NSMutableDictionary dictionaryWithDictionary:defaultAttributes];
+	boldAndItalicAttributes[NSFontAttributeName] = boldAndItalicFont;
+	
+	///
+	NSMutableAttributedString *attributedString =
+	[[NSMutableAttributedString alloc] initWithString:string attributes:defaultAttributes];
+
+	NSDictionary *rangeAttributesDictionary = dictionary[CSAAttributedStringRangesKey];
+	[rangeAttributesDictionary enumerateKeysAndObjectsUsingBlock:
+	 ^(NSString *rangeKey, NSDictionary *attributes, BOOL *stop) {
+		 
+		 if (attributes.count)
+		 {
+			 NSRange range = NSRangeFromString(rangeKey);
+
+			 if (range.length)
+			 {
+				 BOOL isBold = [attributes[CSAAttributedStringBoldKey] boolValue];
+				 BOOL isItalic = [attributes[CSAAttributedStringItalicKey] boolValue];
+				 NSNumber *underline = attributes[CSAAttributedStringUnderlineKey];
+				 
+				 NSMutableDictionary *attrbsToApply = (id) defaultAttributes;
+				 
+				 if (isBold && isItalic)
+					 attrbsToApply = boldAndItalicAttributes;
+				 else if (isBold)
+					 attrbsToApply = boldAttributes;
+				 else if (isItalic)
+					 attrbsToApply = italicAttributes;
+				 
+				 if (underline)
+				 {
+					 attrbsToApply = [NSMutableDictionary dictionaryWithDictionary:attrbsToApply];
+					 attrbsToApply[NSUnderlineStyleAttributeName] = underline;
+				 }
+				 
+				 [attributedString setAttributes:attrbsToApply range:range];
+			 }
+		 }
+	 }];
+	
+	return attributedString;
+}
+
 
 @end
