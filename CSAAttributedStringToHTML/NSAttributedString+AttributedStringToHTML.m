@@ -8,6 +8,16 @@
 
 #import "NSAttributedString+AttributedStringToHTML.h"
 
+NSString * const CSAAttributedStringStringKey = @"CSAAttributedStringStringKey";
+NSString * const CSAAttributedStringRangesKey = @"CSAAttributedStringRangesKey";
+NSString * const CSAAttributedStringBoldKey = @"CSAAttributedStringBoldKey";
+NSString * const CSAAttributedStringUnderlineKey = @"CSAAttributedStringUnderlineKey";
+NSString * const CSAAttributedStringItalicKey = @"CSAAttributedStringItalicKey";
+NSString * const CSAAttributedStringDefaultAttributes = @"CSAAttributedStringDefaultAttributes";
+NSString * const CSAAttributedStringBoldFont = @"CSAAttributedStringBoldFont";
+NSString * const CSAAttributedStringItalicFont = @"CSAAttributedStringItalicFont";
+NSString * const CSAAttributedStringBoldAndItalicFont = @"CSAAttributedStringBoldAndItalicFont";
+
 @implementation NSAttributedString (AttributedStringToHTML)
 
 NSString *EscapeHTMLEntitiesAndReplaceNewlinesWithBR(NSString* string)

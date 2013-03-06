@@ -17,20 +17,20 @@
 #pragma mark - Dictionary Representation Keys
 
 // Contains the plain text string of the attributed string
-#define CSAAttributedStringStringKey		@"CSAAttributedStringStringKey"
+NSString * const CSAAttributedStringStringKey;
 
 // Contains a dictionary of ranges-as-string as the keys, with the object being
 // NSDictionary containing the keys below
-#define CSAAttributedStringRangesKey		@"CSAAttributedStringRangesKey"
+NSString * const CSAAttributedStringRangesKey;
 
 // An NSNumber object containing a BOOL indicating whether the text is bold
-#define CSAAttributedStringBoldKey			@"CSAAttributedStringBoldKey"
+NSString * const CSAAttributedStringBoldKey;
 
 // An NSNumber object containing a BOOL indicating whether the text is bold
-#define CSAAttributedStringUnderlineKey		@"CSAAttributedStringUnderlineKey"
+NSString * const CSAAttributedStringUnderlineKey;
 
 // An NSNumber object containing a BOOL indicating whether the text is italic
-#define CSAAttributedStringItalicKey		@"CSAAttributedStringItalicKey"
+NSString * const CSAAttributedStringItalicKey;
 
 //
 // Provide a dictionary with the following keys to defaultAttrAndBIFonts when
@@ -40,14 +40,20 @@
 
 // Provide the default attributes to style the attributed string when they do
 // not have special formatting
-#define CSAAttributedStringDefaultAttributes	@"CSAAttributedStringDefaultAttributes"
+NSString * const CSAAttributedStringDefaultAttributes;
 
 // Provide the corresponding UIFonts as objects to these keys to replace the
 // UIFont in CSAAttributedStringDefaultAttributes when styling them as bold,
 // italic, or both
-#define CSAAttributedStringBoldFont				@"CSAAttributedStringBoldFont"
-#define CSAAttributedStringItalicFont			@"CSAAttributedStringItalicFont"
-#define CSAAttributedStringBoldAndItalicFont	@"CSAAttributedStringBoldAndItalicFont"
+NSString * const CSAAttributedStringBoldFont;
+NSString * const CSAAttributedStringItalicFont;
+NSString * const CSAAttributedStringBoldAndItalicFont;
+
+typedef enum : NSUInteger {
+	CSAAttributedStringFormattingNone		= 0,
+	CSAAttributedStringFormattingBUI		= 1 << 0,
+	CSAAttributedStringFormattingSpecial	= 1 << 1
+} CSAAttributedStringFormatting;
 
 #import <Foundation/Foundation.h>
 #import "GTMNSString+HTML.h"
