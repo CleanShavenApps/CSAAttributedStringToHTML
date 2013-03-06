@@ -66,7 +66,7 @@ typedef enum : NSUInteger {
 // CSASpecialTagAttributesKey and CSASpecialTagTagKey to mark text matching
 // attributes in CSASpecialTagAttributesKey with tag in CSASpecialTagTagKey.
 // Provide mergerStartTag and mergeEndTag to merge contiguous tags into one
-- (NSString *)HTMLFromRange:(NSRange)range ignoringAttributes:(NSDictionary *)defaultAttributes useTagsForTextMatchingAttributes:(NSArray *)tagsForAttributes mergeContiguousStartTag:(NSString *)mergeStartTag contiguousEndTag:(NSString *)mergeEndTag;
+- (NSString *)HTMLFromRange:(NSRange)range ignoringAttributes:(NSDictionary *)defaultAttributes useTagsForTextMatchingAttributes:(NSArray *)tagsForAttributes mergeContiguousStartTag:(NSString *)mergeStartTag contiguousEndTag:(NSString *)mergeEndTag typeOfFormatting:(CSAAttributedStringFormatting *)formattingType;
 - (NSString *)HTMLFromRange:(NSRange)range ignoringAttributes:(NSDictionary *)defaultAttributes useTagsForTextMatchingAttributes:(NSArray *)tagsForAttributes;
 - (NSString *)HTMLFromRange:(NSRange)range ignoringAttributes:(NSDictionary *)defaultAttributes;
 

@@ -93,7 +93,12 @@ NSString *UIColorToHexString(UIColor *color)
 // CSASpecialTagAttributesKey and CSASpecialTagTagKey to mark text matching
 // attributes in CSASpecialTagAttributesKey with tag in CSASpecialTagTagKey.
 // Provide mergerStartTag and mergeEndTag to merge contiguous tags into one
-- (NSString *)HTMLFromRange:(NSRange)range ignoringAttributes:(NSDictionary *)defaultAttributes useTagsForTextMatchingAttributes:(NSArray *)tagsForAttributes mergeContiguousStartTag:(NSString *)mergeStartTag contiguousEndTag:(NSString *)mergeEndTag
+- (NSString *)HTMLFromRange:(NSRange)range
+		 ignoringAttributes:(NSDictionary *)defaultAttributes
+useTagsForTextMatchingAttributes:(NSArray *)tagsForAttributes
+	mergeContiguousStartTag:(NSString *)mergeStartTag
+		   contiguousEndTag:(NSString *)mergeEndTag
+		   typeOfFormatting:(CSAAttributedStringFormatting *)formattingType
 {
 	NSMutableString *HTML = [NSMutableString string];
 	
@@ -105,12 +110,60 @@ NSString *UIColorToHexString(UIColor *color)
 	
 	BOOL hasNonBreakingTags = mergeStartTag != nil && mergeEndTag != nil;
 	
+	//
+	// If we're requesting information about what kind of formatting the final
+	// HTML from attributed string will have
+	//
+	BOOL needsTypeOfFormatting = formattingType != NULL;
+	CSAAttributedStringFormatting formatting = CSAAttributedStringFormattingNone;
+	CSAAttributedStringFormatting hasAllFormatting = CSAAttributedStringFormattingBUI | CSAAttributedStringFormattingSpecial;
+	NSMutableArray *specialOpeningTags = nil;
+	
+	if (needsTypeOfFormatting)
+	{
+		specialOpeningTags = [NSMutableArray arrayWithCapacity:tagsForAttributes.count];
+		for (NSDictionary *attributeDict in tagsForAttributes)
+		{
+			NSString *specialOpeningTag = attributeDict[CSASpecialTagStartKey];
+			if (specialOpeningTag)
+				[specialOpeningTags addObject:specialOpeningTag];
+		}		
+	}
+	
+	NSUInteger numberOfSpecialAttributes = specialOpeningTags.count;
+	
+	//
+	// Loop through the attributed string to format them
+	//
 	while (location < NSMaxRange(range))
 	{
 		currHTMLElement =
 		[self HTMLElementAtIndex:location longestEffectiveRange:&effectiveRange ignoringAttributes:defaultAttributes useTagsForTextMatchingAttributes:tagsForAttributes];
 		
 		NSArray *currStartTags = currHTMLElement[CSAHTMLElementStartTags];
+		
+		if (needsTypeOfFormatting && currStartTags.count && formatting != hasAllFormatting)
+		{
+			// Check if there's special formatting, only if there are special
+			// attributes and that we don't already have that set
+			if (numberOfSpecialAttributes)
+			{
+				for (NSString *openingTag in specialOpeningTags)
+				{
+					if ([currStartTags containsObject:openingTag])
+						formatting |= CSAAttributedStringFormattingSpecial;
+					else
+						formatting |= CSAAttributedStringFormattingBUI;
+				}
+			}
+			
+			// Else just set BUI as true. !numberOfSpecialAttributes definitely
+			// means this currStartTags contain BUI.
+			else
+			{
+				formatting |= CSAAttributedStringFormattingBUI;
+			}
+		}
 		
 		// Current start tag contains a non-breaking tag
 		if (hasNonBreakingTags && [currStartTags containsObject:mergeStartTag])
@@ -135,7 +188,7 @@ NSString *UIColorToHexString(UIColor *color)
 		// Append the last element
 		[HTML appendString:
 		 [self HTMLElementStringFromHTMLElementDictionary:lastHTMLElement]];
-				
+		
 		// Replace last HTML element with the current one
 		lastHTMLElement = currHTMLElement;
 		location = NSMaxRange(effectiveRange);
@@ -148,17 +201,20 @@ NSString *UIColorToHexString(UIColor *color)
 		 [self HTMLElementStringFromHTMLElementDictionary:lastHTMLElement]];
 	}
 	
+	if (needsTypeOfFormatting)
+		*formattingType = formatting;
+	
 	return HTML;
 }
 
 - (NSString *)HTMLFromRange:(NSRange)range ignoringAttributes:(NSDictionary *)defaultAttributes useTagsForTextMatchingAttributes:(NSArray *)tagsForAttributes
 {
-	return [self HTMLFromRange:range ignoringAttributes:defaultAttributes useTagsForTextMatchingAttributes:tagsForAttributes mergeContiguousStartTag:nil contiguousEndTag:nil];
+	return [self HTMLFromRange:range ignoringAttributes:defaultAttributes useTagsForTextMatchingAttributes:tagsForAttributes mergeContiguousStartTag:nil contiguousEndTag:nil typeOfFormatting:NULL];
 }
 
 - (NSString *)HTMLFromRange:(NSRange)range ignoringAttributes:(NSDictionary *)defaultAttributes
 {
-	return [self HTMLFromRange:range ignoringAttributes:defaultAttributes useTagsForTextMatchingAttributes:nil mergeContiguousStartTag:nil contiguousEndTag:nil];
+	return [self HTMLFromRange:range ignoringAttributes:defaultAttributes useTagsForTextMatchingAttributes:nil mergeContiguousStartTag:nil contiguousEndTag:nil typeOfFormatting:NULL];
 }
 
 - (void)getIsBold:(BOOL *)isBold isItalic:(BOOL *)isItalic forFont:(UIFont *)font
