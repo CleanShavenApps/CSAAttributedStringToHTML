@@ -183,6 +183,10 @@ NSString *UIColorToHexString(UIColor *color)
 // tags separately
 - (NSDictionary *)HTMLElementAtIndex:(NSUInteger)index longestEffectiveRange:(NSRangePointer)effectiveRange ignoringAttributes:(NSDictionary *)defaultAttributes useTagsForTextMatchingAttributes:(NSArray *)tagsForAttributes
 {
+	// Crash proof this when dealing with empty text
+	if (index >= self.length)
+		return nil;
+	
 	NSMutableArray *openingTags = [NSMutableArray array];
 	NSMutableArray *closingTags = [NSMutableArray array];
 	
@@ -328,6 +332,10 @@ NSString *UIColorToHexString(UIColor *color)
 		NSAssert(0, @"Can't determine containsAttributes:atIndex:effectiveRange:seekLongestEffectiveRange: with empty attributesToMatch");
 		return NO;
 	}
+
+	// Crash proof this when dealing with empty text
+	if (index >= self.length)
+		return NO;
 	
 	NSDictionary *attributesAtIndex = nil;
 	
