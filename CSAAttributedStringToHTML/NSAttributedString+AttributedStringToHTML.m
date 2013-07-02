@@ -23,7 +23,7 @@ NSString * const CSAAttributedStringBoldAndItalicFont = @"CSAAttributedStringBol
 NSString *EscapeHTMLEntitiesAndReplaceNewlinesWithBR(NSString* string)
 {
 	NSString *plainTextEscapedForHTML =
-	[string gtm_stringByEscapingForHTML];
+	[string gtm_stringByEscapingForHTMLEmails];
 	
 	NSString *plainTextWithBRTags =
 	[plainTextEscapedForHTML stringByReplacingOccurrencesOfString:@"\n" withString:@"<br />"];
