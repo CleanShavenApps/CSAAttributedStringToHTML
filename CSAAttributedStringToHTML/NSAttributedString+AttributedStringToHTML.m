@@ -7,6 +7,7 @@
 //
 
 #import "NSAttributedString+AttributedStringToHTML.h"
+#import "UASTextAttachment.h"
 
 NSString * const CSAAttributedStringStringKey = @"CSAAttributedStringStringKey";
 NSString * const CSAAttributedStringRangesKey = @"CSAAttributedStringRangesKey";
@@ -87,12 +88,12 @@ NSString *UIColorToHexString(UIColor *color)
 	return adjustedHTMLElement;
 }
 
-// Grabs the HTML for the range of attributed string. Pass in default attributes
-// with font, size, color so that attributes similar to the default attributes
-// will not be styled at all. Pass an array containing dictionaries with
-// CSASpecialTagAttributesKey and CSASpecialTagTagKey to mark text matching
-// attributes in CSASpecialTagAttributesKey with tag in CSASpecialTagTagKey.
-// Provide mergerStartTag and mergeEndTag to merge contiguous tags into one
+/// Grabs the HTML for the range of attributed string. Pass in default attributes
+/// with font, size, color so that attributes similar to the default attributes
+/// will not be styled at all. Pass an array containing dictionaries with
+/// CSASpecialTagAttributesKey and CSASpecialTagTagKey to mark text matching
+/// attributes in CSASpecialTagAttributesKey with tag in CSASpecialTagTagKey.
+/// Provide mergeStartTag and mergeEndTag to merge contiguous tags into one
 - (NSString *)HTMLFromRange:(NSRange)range ignoringAttributes:(NSDictionary *)defaultAttributes useTagsForTextMatchingAttributes:(NSArray *)tagsForAttributes mergeContiguousStartTag:(NSString *)mergeStartTag contiguousEndTag:(NSString *)mergeEndTag
 {
 	NSMutableString *HTML = [NSMutableString string];
@@ -190,6 +191,8 @@ NSString *UIColorToHexString(UIColor *color)
 	NSMutableArray *openingTags = [NSMutableArray array];
 	NSMutableArray *closingTags = [NSMutableArray array];
 	
+	NSString *content = EscapeHTMLEntitiesAndReplaceNewlinesWithBR([self.string substringWithRange:*effectiveRange]);
+	
 	NSDictionary *attributes =
 	[self attributesAtIndex:index
 	  longestEffectiveRange:effectiveRange
@@ -256,11 +259,36 @@ NSString *UIColorToHexString(UIColor *color)
 			[openingTags addObject:@"<u>"];
 			[closingTags insertObject:@"</u>" atIndex:0];
 		}
+		
+		UASTextAttachment *attachment = attributes[NSAttachmentAttributeName];
+		
+		if (attachment)
+		{
+			if (![attachment isKindOfClass:[UASTextAttachment class]])
+			{
+				NSAssert(0, @"Found an attachment that is not an UASAttachment: %@", attachment);
+			}
+			
+			NSString *imgTag =
+			[NSString stringWithFormat:@"<img src='cid:%@' id='%@'>",
+			 attachment.contentID,
+			 attachment.contentID];
+			
+			if (content.length)
+			{
+				content = [content stringByAppendingString:imgTag];
+			}
+			else
+			{
+				content = imgTag;
+			}
+			
+		}
 	}
 
 	return
 	@{
-   CSAHTMLElementContent : EscapeHTMLEntitiesAndReplaceNewlinesWithBR([self.string substringWithRange:*effectiveRange]),
+   CSAHTMLElementContent : content,
    CSAHTMLElementStartTags : openingTags,
    CSAHTMLElementEndTags : closingTags
    };
@@ -426,6 +454,29 @@ NSString *UIColorToHexString(UIColor *color)
 	NSNumber *fullyContains = nil;
 	BOOL containsText = [self containsTextWithAttributes:attributes inRange:range containsForEntireRange:&fullyContains];
 	return containsText && [fullyContains boolValue];
+}
+
+#pragma mark - Attachments
+
+/// Returns a dictionary of UASTextAttachment objects with their range in the
+/// attributed string as keys
+- (NSDictionary *)attachmentsWithRangeAsKey
+{
+	NSMutableDictionary *attachmentsDict =
+	[NSMutableDictionary dictionary];
+	
+	[self enumerateAttribute:NSAttachmentAttributeName
+					 inRange:NSMakeRange(0, self.length)
+					 options:NSAttributedStringEnumerationLongestEffectiveRangeNotRequired
+				  usingBlock:^(id value, NSRange range, BOOL *stop)
+	 {
+		 if ([value isKindOfClass:[UASTextAttachment class]])
+		 {
+			 attachmentsDict[NSStringFromRange(range)] = value;
+		 }
+	 }];
+	
+	return [NSDictionary dictionaryWithDictionary:attachmentsDict];
 }
 
 #pragma mark - Dictionary Representation

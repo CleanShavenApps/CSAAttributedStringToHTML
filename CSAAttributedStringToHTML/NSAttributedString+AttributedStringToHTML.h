@@ -60,12 +60,12 @@ typedef enum : NSUInteger {
 
 @interface NSAttributedString (AttributedStringToHTML)
 
-// Grabs the HTML for the range of attributed string. Pass in default attributes
-// with font, size, color so that attributes similar to the default attributes
-// will not be styled at all. Pass an array containing dictionaries with
-// CSASpecialTagAttributesKey and CSASpecialTagTagKey to mark text matching
-// attributes in CSASpecialTagAttributesKey with tag in CSASpecialTagTagKey.
-// Provide mergerStartTag and mergeEndTag to merge contiguous tags into one
+/// Grabs the HTML for the range of attributed string. Pass in default attributes
+/// with font, size, color so that attributes similar to the default attributes
+/// will not be styled at all. Pass an array containing dictionaries with
+/// CSASpecialTagAttributesKey and CSASpecialTagTagKey to mark text matching
+/// attributes in CSASpecialTagAttributesKey with tag in CSASpecialTagTagKey.
+/// Provide mergeStartTag and mergeEndTag to merge contiguous tags into one
 - (NSString *)HTMLFromRange:(NSRange)range ignoringAttributes:(NSDictionary *)defaultAttributes useTagsForTextMatchingAttributes:(NSArray *)tagsForAttributes mergeContiguousStartTag:(NSString *)mergeStartTag contiguousEndTag:(NSString *)mergeEndTag;
 - (NSString *)HTMLFromRange:(NSRange)range ignoringAttributes:(NSDictionary *)defaultAttributes useTagsForTextMatchingAttributes:(NSArray *)tagsForAttributes;
 - (NSString *)HTMLFromRange:(NSRange)range ignoringAttributes:(NSDictionary *)defaultAttributes;
@@ -101,6 +101,12 @@ typedef enum : NSUInteger {
 
 // The longest effective range version of the above method, less efficient performance wise
 - (BOOL)containsAttributes:(NSDictionary *)attributesToMatch atIndex:(NSUInteger)index longestEffectiveRange:(NSRangePointer)longestEffectiveRange;
+
+#pragma mark - Attachments
+
+/// Returns a dictionary of UASTextAttachment objects with their range in the
+/// attributed string as keys
+- (NSDictionary *)attachmentsWithRangeAsKey;
 
 #pragma mark - 
 
