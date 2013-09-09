@@ -191,12 +191,12 @@ NSString *UIColorToHexString(UIColor *color)
 	NSMutableArray *openingTags = [NSMutableArray array];
 	NSMutableArray *closingTags = [NSMutableArray array];
 	
-	NSString *content = EscapeHTMLEntitiesAndReplaceNewlinesWithBR([self.string substringWithRange:*effectiveRange]);
-	
 	NSDictionary *attributes =
 	[self attributesAtIndex:index
 	  longestEffectiveRange:effectiveRange
 					inRange:NSMakeRange(index, self.length - index)];
+
+	NSString *content = EscapeHTMLEntitiesAndReplaceNewlinesWithBR([self.string substringWithRange:*effectiveRange]);
 	
 	BOOL shouldIgnoreAllAttributes =
 	(attributes && [attributes isEqualToDictionary:defaultAttributes]);
