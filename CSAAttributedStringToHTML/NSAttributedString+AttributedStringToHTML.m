@@ -203,6 +203,12 @@ NSString *UIColorToHexString(UIColor *color)
 	
 	UIFont *defaultFont = defaultAttributes[NSFontAttributeName];
 	
+	// Used to locate NSTextAttachemnt in the attributed string and to replace
+	// them with a space
+	unichar attachmentChar = NSAttachmentCharacter;
+	NSString *attachmentString =
+	[NSString stringWithCharacters:&attachmentChar length:1];
+	
 	if (!shouldIgnoreAllAttributes)
 	{
 		// Puts in tags for these special attributes
@@ -273,6 +279,11 @@ NSString *UIColorToHexString(UIColor *color)
 			[NSString stringWithFormat:@"<img src='cid:%@' id='%@'>",
 			 attachment.contentID,
 			 attachment.contentID];
+			
+			// Replace the attachment character
+			content =
+			[content stringByReplacingOccurrencesOfString:attachmentString
+											   withString:@""];
 			
 			if (content.length)
 			{
