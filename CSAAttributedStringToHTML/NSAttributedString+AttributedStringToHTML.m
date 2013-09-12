@@ -483,7 +483,12 @@ NSString *UIColorToHexString(UIColor *color)
 	 {
 		 if ([value isKindOfClass:[UASTextAttachment class]])
 		 {
-			 attachmentsDict[NSStringFromRange(range)] = value;
+			 UASTextAttachment *attachment = value;
+			 
+			 if (attachment.originalImageFromImagePicker != nil)
+			 {
+				 attachmentsDict[NSStringFromRange(range)] = value;
+			 }
 		 }
 	 }];
 	
