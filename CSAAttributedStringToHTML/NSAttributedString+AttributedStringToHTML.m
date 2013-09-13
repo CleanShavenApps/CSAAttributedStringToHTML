@@ -18,6 +18,7 @@ NSString * const CSAAttributedStringDefaultAttributes = @"CSAAttributedStringDef
 NSString * const CSAAttributedStringBoldFont = @"CSAAttributedStringBoldFont";
 NSString * const CSAAttributedStringItalicFont = @"CSAAttributedStringItalicFont";
 NSString * const CSAAttributedStringBoldAndItalicFont = @"CSAAttributedStringBoldAndItalicFont";
+NSString * const CSAAttributedStringAttachment = @"CSAAttributedStringAttachment";
 
 @implementation NSAttributedString (AttributedStringToHTML)
 
@@ -552,6 +553,16 @@ NSString *UIColorToHexString(UIColor *color)
 	
 	if (isUnderlined)
 		dictionary[CSAAttributedStringUnderlineKey] = @(NSUnderlineStyleSingle);
+	
+	UASTextAttachment *attachment = attributes[NSAttachmentAttributeName];
+	
+	if (attachment &&
+		attachment.originalImageFromImagePicker &&
+		attachment.originalMediaInfoFromImagePicker[UIImagePickerControllerReferenceURL])
+	{
+		dictionary[CSAAttributedStringAttachment] =
+		attachment.originalMediaInfoFromImagePicker[UIImagePickerControllerReferenceURL];
+	}
 	
 	return dictionary;
 }
