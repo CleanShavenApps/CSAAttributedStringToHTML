@@ -264,16 +264,7 @@ NSString *UIColorToHexString(UIColor *color)
 		
 		if (attachment)
 		{
-			if (![attachment isKindOfClass:[UASTextAttachment class]])
-			{
-				NSAssert(0, @"Found an attachment that is not an UASAttachment: %@", attachment);
-			}
-			
-			NSString *imgTag =
-			[NSString stringWithFormat:@"<img src='cid:%@' id='%@'>",
-			 attachment.contentID,
-			 attachment.contentID];
-			
+
 			// Used to locate NSTextAttachemnt in the attributed string and to
 			// replace with an empty string so it doesn't appear in HTML
 			unichar attachmentChar = NSAttachmentCharacter;
@@ -284,14 +275,34 @@ NSString *UIColorToHexString(UIColor *color)
 			content =
 			[content stringByReplacingOccurrencesOfString:attachmentString
 											   withString:@""];
-			
-			if (content.length)
+
+
+			if (![attachment isKindOfClass:[UASTextAttachment class]])
 			{
-				content = [content stringByAppendingString:imgTag];
+				NSAssert(0, @"Found an attachment that is not an UASAttachment: %@", attachment);
 			}
+			
+			else if (!attachment.originalImageFromImagePicker)
+			{
+				DDLogError(@"Found an attachment without original image (possibly deleted from photos, or denied access to photo library");
+			}
+			
 			else
 			{
-				content = imgTag;
+				NSString *imgTag =
+				[NSString stringWithFormat:@"<img src='cid:%@' id='%@'>",
+				 attachment.contentID,
+				 attachment.contentID];
+				
+				
+				if (content.length)
+				{
+					content = [content stringByAppendingString:imgTag];
+				}
+				else
+				{
+					content = imgTag;
+				}
 			}
 			
 		}
