@@ -17,20 +17,20 @@
 #pragma mark - Dictionary Representation Keys
 
 // Contains the plain text string of the attributed string
-NSString * const CSAAttributedStringStringKey;
+extern NSString * const CSAAttributedStringStringKey;
 
 // Contains a dictionary of ranges-as-string as the keys, with the object being
 // NSDictionary containing the keys below
-NSString * const CSAAttributedStringRangesKey;
+extern NSString * const CSAAttributedStringRangesKey;
 
 // An NSNumber object containing a BOOL indicating whether the text is bold
-NSString * const CSAAttributedStringBoldKey;
+extern NSString * const CSAAttributedStringBoldKey;
 
 // An NSNumber object containing a BOOL indicating whether the text is bold
-NSString * const CSAAttributedStringUnderlineKey;
+extern NSString * const CSAAttributedStringUnderlineKey;
 
 // An NSNumber object containing a BOOL indicating whether the text is italic
-NSString * const CSAAttributedStringItalicKey;
+extern NSString * const CSAAttributedStringItalicKey;
 
 //
 // Provide a dictionary with the following keys to defaultAttrAndBIFonts when
@@ -40,14 +40,14 @@ NSString * const CSAAttributedStringItalicKey;
 
 // Provide the default attributes to style the attributed string when they do
 // not have special formatting
-NSString * const CSAAttributedStringDefaultAttributes;
+extern NSString * const CSAAttributedStringDefaultAttributes;
 
 // Provide the corresponding UIFonts as objects to these keys to replace the
 // UIFont in CSAAttributedStringDefaultAttributes when styling them as bold,
 // italic, or both
-NSString * const CSAAttributedStringBoldFont;
-NSString * const CSAAttributedStringItalicFont;
-NSString * const CSAAttributedStringBoldAndItalicFont;
+extern NSString * const CSAAttributedStringBoldFont;
+extern NSString * const CSAAttributedStringItalicFont;
+extern NSString * const CSAAttributedStringBoldAndItalicFont;
 
 typedef enum : NSUInteger {
 	CSAAttributedStringFormattingNone		= 0,
