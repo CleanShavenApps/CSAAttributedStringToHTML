@@ -560,8 +560,8 @@ NSString *UIColorToHexString(UIColor *color)
 		attachment.originalImageFromImagePicker &&
 		attachment.originalMediaInfoFromImagePicker[UIImagePickerControllerReferenceURL])
 	{
-		dictionary[CSAAttributedStringAttachment] =
-		attachment.originalMediaInfoFromImagePicker[UIImagePickerControllerReferenceURL];
+        NSURL *referenceURL = attachment.originalMediaInfoFromImagePicker[UIImagePickerControllerReferenceURL];
+        dictionary[CSAAttributedStringAttachment] = referenceURL.absoluteString;
 	}
 	
 	return dictionary;
